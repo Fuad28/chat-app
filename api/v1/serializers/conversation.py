@@ -69,7 +69,7 @@ class CreateMessageSerializer(serializers.ModelSerializer):
 
 
     def create(self, validated_data):
-        # REMEMBER TO UPDATE IS_SENT IN WS
+        #TODO: REMEMBER TO UPDATE IS_SENT IN WS
 
         user= self.context.get("request").user
         conversation_id= self.context.get("conversation_pk")

@@ -90,3 +90,24 @@ class ConversationViewSet(ModelViewSet):
 		conversation.members.remove(user)
 		return Response(status= status.HTTP_204_NO_CONTENT)
 	
+
+	@action(detail=True, methods=["post"])
+	def make_admin(self, request):
+		conversation = self.get_object()
+		serializer = self.get_serializer(data=request.data)
+		serializer.is_valid(raise_exception= True)
+		user= serializer.data.get("user")
+
+		if request.user not in conversation.members:
+			return Response({
+				"detail": "User is not in conversation."
+				},
+			status= status.HTTP_400_BAD_REQUEST)
+
+		
+		member= ConversationMembers.objects.get(user= user, conversation= conversation)
+		member.is_admin= True
+		member.save() #TODO: should broadcast this, should broadcaset add and remove also
+
+		return Response(status= status.HTTP_204_NO_CONTENT)
+	
