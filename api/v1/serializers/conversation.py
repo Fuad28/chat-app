@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from api.models import User, Conversation, Message, ConversationMembers
+from api.enums import MessageTypeEnum
 from api.v1.serializers import UserRetrieveSerializer
 
 
@@ -66,6 +67,19 @@ class CreateMessageSerializer(serializers.ModelSerializer):
     class Meta:
         model= Conversation
         fields= ["id", "media_url",  "text", "message_type"]
+    
+    def validate(self, attrs):
+        message_type= attrs.get('message_type')
+        media_url= attrs.get('media_url')
+        text= attrs.get('text')
+
+        if (message_type == MessageTypeEnum.TEXT) and (not text):
+            raise serializers.ValidationError(
+                "Message of type text must contain a text.")
+        
+        if (message_type != MessageTypeEnum.TEXT) and (not media_url):
+            raise serializers.ValidationError(
+                "Message of types audio, video and image contain a media_url.")
 
 
     def create(self, validated_data):
