@@ -15,22 +15,24 @@ class ConversationViewSet(ModelViewSet):
 	http_method_names= ["get", "post", "patch"]
 	
 	def get_serializer_class(self):
+		if self.action in ["add_member", "remove_member", "make_admin"]:
+			return AddORemoveMemberConversationSerializer
+		
 		if self.action == "create":
 			return CreateConversationSerializer
 		
-		elif self.action == "retrieve":
+		if self.action == "retrieve":
 			return ConversationSerializer
 		
-		elif self.action in ["add_member", "remove_member"]:
-			return AddORemoveMemberConversationSerializer
+		
 
 		return SimpleConversationSerializer
 	
 	def get_permissions(self):
-		if self.action in ["add_member", "remove_member"]:
+		if self.action in ["add_member", "remove_member", "make_admin"]:
 			return [IsAuthenticated(), IsConversationMember(), IsConversationAdmin()]
 
-		elif self.action == "list":
+		if self.action == "list":
 			return SimpleConversationSerializer
 
 		return [IsAuthenticated()]
