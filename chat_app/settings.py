@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/4.0/ref/settings/
 
 import os
 from pathlib import Path
+from datetime import timedelta
 
 import environ
 import dj_database_url
@@ -40,8 +41,8 @@ CSRF_TRUSTED_ORIGINS = env.list('DJANGO_CSRF_TRUSTED_ORIGINS', default=['*'])
 # Application definition
 
 INSTALLED_APPS = [
-    'daphne',
-    'channels',
+    # 'daphne',
+    # 'channels',
 
     'django.contrib.admin',
     'django.contrib.auth',
@@ -51,7 +52,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'rest_framework',
-    'djoser'
+    'djoser',
+    'anymail',
 
     'api',
 ]
@@ -91,7 +93,7 @@ WSGI_APPLICATION = 'chat_app.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
 
-DATABASE_URL = environ.str("DATABASE_URL")
+DATABASE_URL = env.str("DATABASE_URL")
 DATABASES = {
     "default": dj_database_url.config(default=DATABASE_URL, conn_max_age=1800),
 }
@@ -139,6 +141,7 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+AUTH_USER_MODEL = 'api.User'
 
 REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "rest_framework.schemas.coreapi.AutoSchema",
@@ -149,6 +152,46 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
-    "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend"],
+    # "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend"],
     "PAGE_SIZE": 30
 }
+
+SIMPLE_JWT = {
+    "AUTH_HEADER_TYPES": ("JWT", "Bearer"),
+    "ACCESS_TOKEN_LIFETIME": timedelta(days=1),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+}
+
+DJOSER = {
+    'SEND_ACTIVATION_EMAIL': False,
+    'SEND_CONFIRMATION_EMAIL': True,
+    'PASSWORD_CHANGED_EMAIL_CONFIRMATION': True,
+    'USERNAME_CHANGED_EMAIL_CONFIRMATION': True,
+    'PASSWORD_RESET_CONFIRM_URL': 'api/v1/forgot-password-confirm/{uid}/{token}', 
+    'LOGOUT_ON_PASSWORD_CHANGE': False,
+
+    'SERIALIZERS': {
+        'user_create': 'api.v1.serializers.user.UserCreateSerializer',
+        'current_user': 'api.v1.serializers.user.UserRetrieveSerializer',
+    },
+}
+
+
+EMAIL_BACKEND = env.str("EMAIL_BACKEND", "anymail.backends.mailjet.EmailBackend")
+DEFAULT_FROM_EMAIL = env.str("DEFAULT_FROM_EMAIL") 
+
+# Dev email config
+if EMAIL_BACKEND == "django.core.mail.backends.smtp.EmailBackend":
+    EMAIL_HOST= env.str("EMAIL_HOST", "smtp4dev")
+    EMAIL_HOST_USER=env.str("EMAIL_HOST_USER", "")
+    EMAIL_HOST_PASSWORD= env.str("EMAIL_HOST_PASSWORD", "")
+    EMAIL_PORT= env.str("EMAIL_PORT", 25)
+
+else:
+
+    # Prod email config
+    ANYMAIL = {
+        "MAILJET_API_KEY": env.str("MAILJET_API_KEY"),
+        "MAILJET_SECRET_KEY": env.str("MAILJET_SECRET_KEY"),
+        "MAILJET_API_URL": env.str("MAILJET_API_URL")
+    }
