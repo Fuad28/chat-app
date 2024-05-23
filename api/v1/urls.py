@@ -1,10 +1,14 @@
 from django.urls import path
+from rest_framework_nested import routers
 from rest_framework_simplejwt import views as simple_jwt_views
 
-from api.v1.views import UserViewSet
+from api.v1.views import UserViewSet, ConversationViewSet
 
 
 app_name = "api-v1"
+
+router = routers.DefaultRouter()
+router.register("bank-accounts", ConversationViewSet, basename= "conversation-view")
 
 urlpatterns = [
 
@@ -18,4 +22,4 @@ urlpatterns = [
     path("forgot-password-confirm/", UserViewSet.as_view({"post": "reset_password_confirm"}), name="forgot-password-confirm"),
     path("reset-password/", UserViewSet.as_view({"post": "set_password"}), name="reset-password"),
     
-    ]
+    ] + router.urls
