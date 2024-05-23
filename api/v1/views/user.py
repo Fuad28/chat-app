@@ -1,14 +1,7 @@
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.decorators import action
-from rest_framework_simplejwt.tokens import RefreshToken
 
 from djoser.views import UserViewSet as DjoserUserViewset
-from djoser import signals
-from djoser.compat import get_user_email
-from djoser.conf import settings
-
-from django.utils.timezone import now
 
 class UserViewSet(DjoserUserViewset):
 
