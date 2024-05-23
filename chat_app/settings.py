@@ -37,6 +37,8 @@ ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['*'])
 
 CSRF_TRUSTED_ORIGINS = env.list('DJANGO_CSRF_TRUSTED_ORIGINS', default=['*'])
 
+ASGI_APPLICATION= "chat_app.asgi.application"
+
 
 # Application definition
 
@@ -194,4 +196,3 @@ elif EMAIL_BACKEND == "anymail.backends.mailjet.EmailBackend":
         "MAILJET_API_URL": env.str("MAILJET_API_URL")
     }
 
-    

@@ -1,0 +1,1 @@
+from api.utils.authentication import JWTAuthMiddleware
