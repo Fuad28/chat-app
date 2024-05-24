@@ -27,6 +27,14 @@ class Conversation(models.Model):
 
 	def remove_member(self, user: User):
 		self.members.remove(user)
+	
+	def to_dict(self):
+		return {
+			"id": self.id,
+			"name": self.name,
+			"is_private": self.is_private,
+			"created_by": self.created_by 
+		}
 
 
 class ConversationMembers(models.Model):
