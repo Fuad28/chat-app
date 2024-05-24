@@ -1,10 +1,12 @@
+from django.db.models import Q
+
 from rest_framework import status
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action 
 from rest_framework.response import Response
 
-from api.models import Conversation, Message, ConversationMembers
+from api.models import Conversation,  ConversationMembers
 from api.v1.permissions import IsConversationMember, IsConversationAdmin
 from api.v1.serializers.conversation import (
 	CreateConversationSerializer, ConversationSerializer, SimpleConversationSerializer,
@@ -24,7 +26,6 @@ class ConversationViewSet(ModelViewSet):
 		if self.action == "retrieve":
 			return ConversationSerializer
 		
-		
 
 		return SimpleConversationSerializer
 	
@@ -32,22 +33,30 @@ class ConversationViewSet(ModelViewSet):
 		if self.action in ["add_member", "remove_member", "make_admin"]:
 			return [IsAuthenticated(), IsConversationMember(), IsConversationAdmin()]
 
-		if self.action == "list":
-			return SimpleConversationSerializer
-
 		return [IsAuthenticated()]
-		
 
 	def get_queryset(self):
-		return Conversation.objects.filter(members= self.request.user)
+		if self.action == "list":
+			return Conversation.objects.filter(members= self.request.user)
+
+		return Conversation.objects.filter(
+			Q(is_private= False) | 
+			Q(is_private=True, members= self.request.user)
+		).distinct()
 	
 	def get_object(self) -> Conversation:
 		return super().get_object()
 	
 
 	@action(detail=True, methods=["post"])
-	def join(self, request):
+	def join(self, request, **kwargs):
 		conversation = self.get_object()
+
+		if not conversation.members.filter(id= self.request.user).exists():
+			return Response({
+				"detail": "You are already in conversation."
+				},
+			status= status.HTTP_400_BAD_REQUEST)
 		
 		if not conversation.is_private:
 			conversation.members.add(self.request.user)
@@ -60,33 +69,46 @@ class ConversationViewSet(ModelViewSet):
 	
 
 	@action(detail=True, methods=["post"])
-	def add_member(self, request):
+	def add_member(self, **kwargs):
 		conversation = self.get_object()
-		serializer = self.get_serializer(data=request.data)
+		serializer = self.get_serializer(data= self.request.data)
 		serializer.is_valid(raise_exception= True)
 		user= serializer.data.get("user")
+
+		if conversation.members.filter(id= user).exists():
+			return Response({
+				"detail": "User is already in conversation."
+				},
+			status= status.HTTP_400_BAD_REQUEST)
 
 		if not conversation.is_private:
 			conversation.members.add(user)
 			return Response(status= status.HTTP_204_NO_CONTENT)
 		
 		return Response({
-				"detail": "You can't join a provate conversation."},
+				"detail": "You can't join a private conversation."},
 				status= status.HTTP_403_FORBIDDEN)
 	
-
+	
 	@action(detail=True, methods=["post"])
-	def remove_member(self, request):
+	def remove_member(self, **kwargs):
 		conversation = self.get_object()
-		serializer = self.get_serializer(data=request.data)
+		serializer = self.get_serializer(data= self.request.data)
 		serializer.is_valid(raise_exception= True)
 		user= serializer.data.get("user")
 
-		if request.user != conversation.created_by:
+		if self.request.user != conversation.created_by:
 			return Response({
 				"detail": "You can't remove group creator."
 				},
 			status= status.HTTP_403_FORBIDDEN)
+		
+
+		if not conversation.members.filter(id= user).exists():
+			return Response({
+				"detail": "User is not in conversation."
+				},
+			status= status.HTTP_400_BAD_REQUEST)
 
 		
 		conversation.members.remove(user)
@@ -94,22 +116,26 @@ class ConversationViewSet(ModelViewSet):
 	
 
 	@action(detail=True, methods=["post"])
-	def make_admin(self, request):
+	def make_admin(self,  **kwargs):
 		conversation = self.get_object()
-		serializer = self.get_serializer(data=request.data)
+		serializer = self.get_serializer(data= self.request.data)
 		serializer.is_valid(raise_exception= True)
 		user= serializer.data.get("user")
+		
 
-		if request.user not in conversation.members:
+		if not conversation.members.filter(id= user).exists():
 			return Response({
 				"detail": "User is not in conversation."
 				},
 			status= status.HTTP_400_BAD_REQUEST)
 
 		
-		member= ConversationMembers.objects.get(user= user, conversation= conversation)
+		member= ConversationMembers.objects.get(
+			user= user, 
+			conversation= conversation
+		)
 		member.is_admin= True
-		member.save() #TODO: should broadcast this, should broadcaset add and remove also
+		member.save()
 
 		return Response(status= status.HTTP_204_NO_CONTENT)
 	

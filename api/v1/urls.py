@@ -8,7 +8,7 @@ from api.v1.views import UserViewSet, ConversationViewSet
 app_name = "api-v1"
 
 router = routers.DefaultRouter()
-router.register("bank-accounts", ConversationViewSet, basename= "conversation-view")
+router.register("conversations", ConversationViewSet, basename= "conversation-view")
 
 urlpatterns = [
 

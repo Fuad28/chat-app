@@ -15,8 +15,17 @@ class CreateConversationSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         user= self.context.get("request").user
-        conversation= Conversation.objects.create(user= user, **validated_data)
+        conversation= Conversation.objects.create(created_by= user, **validated_data)
         conversation.members.add(user)
+
+        convo_member= ConversationMembers.objects.get(
+            user= user, 
+            conversation= conversation
+        )
+        convo_member.is_admin= True
+        convo_member.save()
+
+        return conversation
 
 class SimpleConversationSerializer(serializers.ModelSerializer):   
     number_of_unreads= serializers.SerializerMethodField()
