@@ -24,9 +24,7 @@ services:
         volumes:
             - pgdata:/var/lib/postgresql/data
         environment:
-            - POSTGRES_DB=${DB_NAME}
-            - POSTGRES_USER=${DB_USERNAME}
-            - POSTGRES_PASSWORD=${DB_PASS}
+            - POSTGRES_DB_URL=${DATABASE_URL}
 
     smtp4dev:
         image: rnwood/smtp4dev:v3
