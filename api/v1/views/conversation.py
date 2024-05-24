@@ -5,6 +5,8 @@ from rest_framework.viewsets import ModelViewSet
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action 
 from rest_framework.response import Response
+from rest_framework.request import Request
+
 
 from api.models import Conversation,  ConversationMembers
 from api.v1.permissions import IsConversationMember, IsConversationAdmin
@@ -49,29 +51,28 @@ class ConversationViewSet(ModelViewSet):
 	
 
 	@action(detail=True, methods=["post"])
-	def join(self, request, **kwargs):
+	def join(self, request: Request, **kwargs):
 		conversation = self.get_object()
 
-		if not conversation.members.filter(id= self.request.user).exists():
+		if not conversation.members.filter(id= request.user).exists():
 			return Response({
 				"detail": "You are already in conversation."
 				},
 			status= status.HTTP_400_BAD_REQUEST)
 		
 		if not conversation.is_private:
-			conversation.members.add(self.request.user)
+			conversation.members.add(request.user)
 			return Response(status= status.HTTP_204_NO_CONTENT)
 		
 		return Response({
 			"detail": "You can't join a private conversation."
 			},
 			status= status.HTTP_403_FORBIDDEN)
-	
 
 	@action(detail=True, methods=["post"])
-	def add_member(self, **kwargs):
+	def add_member(self, request: Request, **kwargs):
 		conversation = self.get_object()
-		serializer = self.get_serializer(data= self.request.data)
+		serializer = self.get_serializer(data= request.data)
 		serializer.is_valid(raise_exception= True)
 		user= serializer.data.get("user")
 
@@ -89,15 +90,14 @@ class ConversationViewSet(ModelViewSet):
 				"detail": "You can't join a private conversation."},
 				status= status.HTTP_403_FORBIDDEN)
 	
-	
 	@action(detail=True, methods=["post"])
-	def remove_member(self, **kwargs):
+	def remove_member(self, request: Request, **kwargs):
 		conversation = self.get_object()
-		serializer = self.get_serializer(data= self.request.data)
+		serializer = self.get_serializer(data= request.data)
 		serializer.is_valid(raise_exception= True)
 		user= serializer.data.get("user")
 
-		if self.request.user != conversation.created_by:
+		if (user == conversation.created_by.id) and (request.user != conversation.created_by):
 			return Response({
 				"detail": "You can't remove group creator."
 				},
@@ -116,25 +116,24 @@ class ConversationViewSet(ModelViewSet):
 		return Response(status= status.HTTP_204_NO_CONTENT)
 	
 	@action(detail=True, methods=["post"])
-	def leave_conversation(self, request, **kwargs):
+	def leave_conversation(self, request: Request, **kwargs):
 		conversation = self.get_object()
 
-		if not conversation.members.filter(id= self.request.user.id).exists():
+		if not conversation.members.filter(id= request.user.id).exists():
 			return Response({
 				"detail": "User is not in conversation."
 				},
 			status= status.HTTP_400_BAD_REQUEST)
 
 		
-		conversation.members.remove(self.request.user)
+		conversation.members.remove(request.user)
 
 		return Response(status= status.HTTP_204_NO_CONTENT)
 	
-
 	@action(detail=True, methods=["post"])
-	def make_admin(self,  **kwargs):
+	def make_admin(self,  request: Request, **kwargs):
 		conversation = self.get_object()
-		serializer = self.get_serializer(data= self.request.data)
+		serializer = self.get_serializer(data= request.data)
 		serializer.is_valid(raise_exception= True)
 		user= serializer.data.get("user")
 		
