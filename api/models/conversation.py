@@ -12,10 +12,23 @@ class Conversation(models.Model):
 	
 	id= models. UUIDField(default= uuid.uuid4, editable= False, primary_key= True)
 	name= models.CharField(max_length= 100)
-	created_by= models.ForeignKey(User, on_delete= models.SET_NULL, related_name= "created_conversations", **null_blank)
+
+	created_by= models.ForeignKey(
+		User, 
+		on_delete= models.SET_NULL, 
+		related_name= "created_conversations",
+		**null_blank
+	)
+
+	members= models.ManyToManyField(
+		User, 
+		through= "ConversationMembers", 
+		through_fields=("conversation", "user"),
+		related_name= "conversations"
+	)
+
 	created_at= models.DateTimeField(auto_now= True)
 	updated_at= models.DateTimeField(auto_now_add= True)
-	members= models.ManyToManyField(User, through= "ConversationMembers", through_fields=("group", "user"), related_name= "conversations")
 	is_private= models.BooleanField(default= False)
 
 
@@ -49,10 +62,28 @@ class Message(models.Model):
 	""" Message model. """
 
 	id= models. UUIDField(default= uuid.uuid4, editable= False, primary_key= True)
-	conversation= models.ForeignKey(Conversation, on_delete= models.CASCADE, related_name= "messages")
-	sent_by= models.ForeignKey(User, on_delete= models.SET_NULL, related_name= "sent_messages", **null_blank)
+
+	conversation= models.ForeignKey(
+		Conversation, 
+		on_delete= models.CASCADE, 
+		related_name= "messages"
+	)
+
+	sent_by= models.ForeignKey(
+		User, 
+		on_delete= models.SET_NULL, 
+		related_name= "sent_messages", 
+		**null_blank
+	)
+
+	seen_by= models.ManyToManyField(
+		User, 
+		through= "MessageViewers", 
+		through_fields=("message", "user"), 
+		related_name= "seen_messages"
+		)
+	
 	sent_at= models.DateTimeField(auto_now= True)
-	seen_by= models.ManyToManyField(User, through= "MessageViewers", through_fields=("message", "user"), related_name= "seen_messages")
 	updated_at= models.DateTimeField(auto_now_add= True)
 	media_url= models.URLField(**null_blank)
 	text= models.TextField(**null_blank)
