@@ -18,7 +18,6 @@ class CreateConversationSerializer(serializers.ModelSerializer):
         conversation= Conversation.objects.create(user= user, **validated_data)
         conversation.members.add(user)
 
-
 class SimpleConversationSerializer(serializers.ModelSerializer):   
     number_of_unreads= serializers.SerializerMethodField()
 
@@ -43,8 +42,6 @@ class SimpleConversationSerializer(serializers.ModelSerializer):
                 seen_by=user
             ).count()
 
-    
-
 class ConversationSerializer(serializers.ModelSerializer):
     created_by= UserRetrieveSerializer()
     members= UserRetrieveSerializer(many= True)
@@ -60,9 +57,8 @@ class ConversationSerializer(serializers.ModelSerializer):
 class AddORemoveMemberConversationSerializer(serializers.Serializer):
     user= serializers.PrimaryKeyRelatedField(queryset= User.objects.all())
     
-
-class CreateMessageSerializer(serializers.ModelSerializer):
-    """Creates a message record"""
+class CreateUpdateMessageSerializer(serializers.ModelSerializer):
+    """Creates or updates a message record"""
 
     class Meta:
         model= Conversation
@@ -83,7 +79,6 @@ class CreateMessageSerializer(serializers.ModelSerializer):
 
 
     def create(self, validated_data):
-        #TODO: REMEMBER TO UPDATE IS_SENT IN WS
 
         user= self.context.get("request").user
         conversation_id= self.context.get("conversation_pk")
@@ -95,8 +90,6 @@ class CreateMessageSerializer(serializers.ModelSerializer):
         message.seen_by.add(user)
 
         return message
-    
-
 
 class MessageSerializer(serializers.ModelSerializer):
 

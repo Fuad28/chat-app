@@ -30,7 +30,7 @@ class Conversation(models.Model):
 	
 	def to_dict(self):
 		return {
-			"id": self.id,
+			"id": str(self.id),
 			"name": self.name,
 			"is_private": self.is_private,
 			"created_by": self.created_by 
@@ -61,6 +61,16 @@ class Message(models.Model):
 
 	def __str__(self):
 		return f"{self.id}"
+	
+	def to_dict(self):
+		return {
+            'id': str(self.id),
+            'text': self.text,
+			'media_url': self.media_url,
+            'sent_by': self.sent_by,
+            'sent_at': self.sent_at.isoformat(),
+            'message_type': self.message_type,
+        }
 	
 
 class MessageViewers(models.Model):
