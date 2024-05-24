@@ -39,6 +39,14 @@ CSRF_TRUSTED_ORIGINS = env.list('DJANGO_CSRF_TRUSTED_ORIGINS', default=['*'])
 
 ASGI_APPLICATION= "chat_app.asgi.application"
 
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": env("CHANNEL_LAYERS_BACKEND", default="channels_redis.core.RedisChannelLayer"),
+        "CONFIG": {
+            "hosts": [(env.str("CHANNEL_REDIS_HOST"), env.int("CHANNEL_REDIS_PORT"))],
+        },
+    },
+}
 
 # Application definition
 
