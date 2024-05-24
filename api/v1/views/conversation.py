@@ -112,6 +112,22 @@ class ConversationViewSet(ModelViewSet):
 
 		
 		conversation.members.remove(user)
+
+		return Response(status= status.HTTP_204_NO_CONTENT)
+	
+	@action(detail=True, methods=["post"])
+	def leave_conversation(self, request, **kwargs):
+		conversation = self.get_object()
+
+		if not conversation.members.filter(id= self.request.user.id).exists():
+			return Response({
+				"detail": "User is not in conversation."
+				},
+			status= status.HTTP_400_BAD_REQUEST)
+
+		
+		conversation.members.remove(self.request.user)
+
 		return Response(status= status.HTTP_204_NO_CONTENT)
 	
 
