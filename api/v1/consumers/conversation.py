@@ -6,6 +6,32 @@ from api.services import redis_client
 from api.models import User, Conversation, ConversationMembers, Message
 from api.v1.serializers.conversation import CreateUpdateMessageSerializer, MessageSerializer
 
+
+@database_sync_to_async
+def _get_conversations_details(user):
+    """ Gets the details of all conversation a user belongs. """
+
+    data= {}
+
+    conversations = Conversation.objects.filter(members= user)
+
+    for conversation in conversations:
+        joined_at = ConversationMembers.objects.get(
+            user= user, 
+            conversation= conversation
+        ).joined_at
+
+        unreads= Message.objects.filter(
+            conversation= conversation, 
+            sent_at__gte= joined_at
+            ).exclude(
+                seen_by=user
+            ).count()
+
+        data[str(conversation.id)] = {"unreads": unreads, **conversation.to_dict()}
+
+    
+    return data
 class ConversationConsumer(AsyncWebsocketConsumer):
 
     async def connect(self):
@@ -14,53 +40,27 @@ class ConversationConsumer(AsyncWebsocketConsumer):
 
         self.user: User= self.scope["user"]
 
-        conversations = Conversation.objects.filter(members= self.user)
-        for conversation in conversations:
-            await self.channel_layer.group_add(conversation.id, self.channel_name)
+        conversations = await _get_conversations_details(self.user)
+        for conversation_id in conversations:
+            await self.channel_layer.group_add(str(conversation_id), self.channel_name)
 
-        conversations= await self._get_conversations_details(self.user)
         data= {
             "status": "connected",
             "conversations": conversations
         }
-        await self.channel_layer.send(self.channel_name, {"type": "send.message", "data": data})
+
+        return await self.channel_layer.send(self.channel_name, {"type": "send.message", "message": data})
 
 
     async def disconnect(self, close_code):
-        conversations = Conversation.objects.filter(members= self.user)
-        for conversation in conversations:
-            await self.channel_layer.group_discard(conversation.id, self.channel_name)
+        conversations = _get_conversations_details(self.user)
+        for conversation_id in conversations:
+            await self.channel_layer.group_discard(conversation_id, self.channel_name)
 
     
     async def send_message(self, event):
-        await self.send(text_data= json.dumps({"message": event["data"]}))
+        return await self.send(text_data= json.dumps({"message": event["message"]}))
 
-    @database_sync_to_async
-    def _get_conversations_details(user):
-        """ Gets the details of all conversation a user belongs. """
-
-        data= {}
-
-        conversations = Conversation.objects.filter(members= user)
-
-        for conversation in conversations:
-            joined_at = ConversationMembers.objects.get(
-                user= user, 
-                conversation= conversation
-            ).joined_at
-
-            unreads= Message.objects.filter(
-                conversation= conversation, 
-                sent_at__gte= joined_at
-                ).exclude(
-                    seen_by=user
-                ).count()
-
-            data[conversation.id] = {"unreads": unreads, **conversation.to_dict()}
-    
-        
-        return data
-    
 class MessageConsumer(AsyncWebsocketConsumer):
         
     async def connect(self):

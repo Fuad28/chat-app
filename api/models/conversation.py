@@ -46,7 +46,7 @@ class Conversation(models.Model):
 			"id": str(self.id),
 			"name": self.name,
 			"is_private": self.is_private,
-			"created_by": self.created_by 
+			"created_by": self.created_by.to_dict()
 		}
 
 
