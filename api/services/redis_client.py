@@ -1,3 +1,5 @@
+from django.conf import settings
+
 import redis
 import json
 
@@ -52,4 +54,4 @@ class RedisClient:
 
 
 
-redis_client = RedisClient()
+redis_client = RedisClient(settings.REDIS_HOST, settings.REDIS_PORT)
