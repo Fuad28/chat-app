@@ -98,7 +98,7 @@ class Message(models.Model):
             'id': str(self.id),
             'text': self.text,
 			'media_url': self.media_url,
-            'sent_by': self.sent_by,
+            'sent_by': self.sent_by.to_dict(),
             'sent_at': self.sent_at.isoformat(),
             'message_type': self.message_type,
         }

@@ -70,7 +70,7 @@ class CreateUpdateMessageSerializer(serializers.ModelSerializer):
     """Creates or updates a message record"""
 
     class Meta:
-        model= Conversation
+        model= Message
         fields= ["id", "media_url",  "text", "message_type"]
     
     def validate(self, attrs):
@@ -85,12 +85,14 @@ class CreateUpdateMessageSerializer(serializers.ModelSerializer):
         if (message_type != MessageTypeEnum.TEXT) and (not media_url):
             raise serializers.ValidationError(
                 "Message of types audio, video and image contain a media_url.")
+        
+        return attrs
 
 
     def create(self, validated_data):
 
-        user= self.context.get("request").user
-        conversation_id= self.context.get("conversation_pk")
+        user= self.context.get("user")
+        conversation_id= self.context.get("conversation_id")
         message= Message.objects.create(
             sent_by= user, 
             conversation_id= conversation_id, 
