@@ -1,5 +1,3 @@
-from django.conf import settings
-
 import redis
 import json
 
@@ -8,7 +6,6 @@ class RedisClient:
         self.client = redis.StrictRedis(host=host, port=port, db=db)
     
     def store_message(self, conversation_id, message) -> None:
-        print("hereeeee redis 2")
         key = f"conversation:{conversation_id}:messages"
         self.client.rpush(key, json.dumps(message))
         self.client.ltrim(key, -500, -1)
@@ -46,7 +43,7 @@ class RedisClient:
                 self.client.lset(key, idx, json.dumps(message))
                 break
     
-    def list_messages(self, conversation_id, count=500):
+    def get_recent_messages(self, conversation_id, count=500):
         key = f"conversation:{conversation_id}:messages"
         recent_messages = self.client.lrange(key, -count, -1)
         return [json.loads(msg) for msg in recent_messages]
@@ -55,4 +52,4 @@ class RedisClient:
 
 
 
-redis_client = RedisClient(settings.REDIS_HOST, settings.REDIS_PORT)
+redis_client = RedisClient()

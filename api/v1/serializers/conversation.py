@@ -66,6 +66,37 @@ class ConversationSerializer(serializers.ModelSerializer):
 class AddORemoveMemberConversationSerializer(serializers.Serializer):
     user= serializers.PrimaryKeyRelatedField(queryset= User.objects.all())
     
+
+class MessageSerializer(serializers.ModelSerializer):
+    sent_by= UserRetrieveSerializer()
+    seen_by= UserRetrieveSerializer(many= True)
+    is_mine= serializers.SerializerMethodField()
+
+    class Meta:
+        model= Message
+        fields= [
+            "id", "conversation", "sent_by",  "is_mine", "sent_at",
+            "seen_by", "updated_at", "media_url", "text", "message_type"
+        ]
+
+    def get_is_mine(self, instance: Message):
+        return self.context.get("user") == instance.seen_by
+
+
+class SimpleMessageSerializer(serializers.ModelSerializer):
+    sent_by= UserRetrieveSerializer()
+    is_mine= serializers.SerializerMethodField()
+    class Meta:
+        model= Message
+        fields= [
+            "id", "conversation", "sent_by", "is_mine", "sent_at",
+            "seen_by", "updated_at", "media_url", "text", "message_type"
+        ]
+
+    def get_is_mine(self, instance: Message):
+        return self.context.get("user") == instance.seen_by
+    
+
 class CreateUpdateMessageSerializer(serializers.ModelSerializer):
     """Creates or updates a message record"""
 
@@ -87,10 +118,12 @@ class CreateUpdateMessageSerializer(serializers.ModelSerializer):
                 "Message of types audio, video and image contain a media_url.")
         
         return attrs
+    
+    def to_representation(self, instance):
+        return SimpleMessageSerializer(instance= instance).data
 
 
     def create(self, validated_data):
-
         user= self.context.get("user")
         conversation_id= self.context.get("conversation_id")
         message= Message.objects.create(
@@ -101,12 +134,3 @@ class CreateUpdateMessageSerializer(serializers.ModelSerializer):
         message.seen_by.add(user)
 
         return message
-
-class MessageSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model= Conversation
-        fields= [
-            "id", "conversation", "sent_by",  "sent_at",
-            "seen_by", "updated_at", "media_url", "text", "message_type"
-        ]
