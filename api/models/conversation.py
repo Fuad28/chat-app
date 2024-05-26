@@ -1,12 +1,14 @@
 from django.db import models
+from django.core.cache import cache
 
 import uuid
 
 from api.models import User
 from api.enums import MessageTypeEnum
+from api.managers import CachedMessageQuerySet
 
 null_blank = {"null": True, "blank": True}
-	
+
 class Conversation(models.Model):
 	""" Conversation model. """
 	
@@ -46,10 +48,9 @@ class Conversation(models.Model):
 			"id": str(self.id),
 			"name": self.name,
 			"is_private": self.is_private,
-			"created_by": self.created_by 
+			"created_by": self.created_by.to_dict()
 		}
-
-
+		
 class ConversationMembers(models.Model):
 	""" Holds members of a conversation record. """
 	
@@ -57,6 +58,7 @@ class ConversationMembers(models.Model):
 	conversation= models.ForeignKey(Conversation, on_delete= models.CASCADE)
 	joined_at= models.DateTimeField(auto_now= True)
 	is_admin= models.BooleanField(default= False)
+
 
 class Message(models.Model):
 	""" Message model. """
@@ -90,20 +92,21 @@ class Message(models.Model):
 	message_type= models.CharField(max_length= 50, choices= MessageTypeEnum.choices)
 	is_sent = models.BooleanField(default= False)
 
+	objects= CachedMessageQuerySet.as_manager()
+
 	def __str__(self):
 		return f"{self.id}"
 	
 	def to_dict(self):
 		return {
-            'id': str(self.id),
-            'text': self.text,
+			'id': str(self.id),
+			'text': self.text,
 			'media_url': self.media_url,
-            'sent_by': self.sent_by,
-            'sent_at': self.sent_at.isoformat(),
-            'message_type': self.message_type,
-        }
+			'sent_by': self.sent_by.to_dict(),
+			'sent_at': self.sent_at.isoformat(),
+			'message_type': self.message_type,
+		}
 	
-
 class MessageViewers(models.Model):
 	""" Holds users that have seen a message. """
 	

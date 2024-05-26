@@ -1,1 +1,1 @@
-from api.v1.permissions.conversation import IsConversationMember, IsConversationAdmin
+from api.v1.permissions.conversation import IsConversationMember, IsConversationAdmin, IsMessageOwnerorAdmin

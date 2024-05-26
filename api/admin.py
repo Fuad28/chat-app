@@ -35,14 +35,7 @@ class CustomUserAdmin(UserAdmin):
 
 admin.site.register(User, CustomUserAdmin)
 
-class BaseModelMixinAdmin(admin.ModelAdmin):
-    readonly_fields = (
-        "id",
-        "created_at",
-        "updated_at",
-    )
 
-
-# for model in apps.get_app_config("api").get_models():
-#     if (model != User) and (model != WalletTransaction):
-#         admin.site.register(model, admin.ModelAdmin)
+for model in apps.get_app_config("api").get_models():
+    if (model != User):
+        admin.site.register(model, admin.ModelAdmin)
