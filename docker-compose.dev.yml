@@ -26,15 +26,6 @@ services:
         environment:
             - POSTGRES_DB_URL=${DATABASE_URL}
 
-    smtp4dev:
-        image: rnwood/smtp4dev:v3
-        ports:
-            - 8001:80
-            - 25:25
-        restart: always
-        env_file:
-            - .env
-
     redis:
         image: redis:6.2-alpine
         ports:
