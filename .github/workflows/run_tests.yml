@@ -46,10 +46,6 @@ jobs:
             - name: Build the Docker containers
               run: docker-compose -f docker-compose.dev.yml up -d --build --remove-orphans
 
-            - name: Wait for DB to be ready
-              run: |
-                  docker-compose -f docker-compose.dev.yml exec -T db bash -c "until pg_isready -h db -p 5432; do sleep 1; done"
-
             - name: Make run_tests.sh executable
               run: chmod +x /app/run_tests.sh
 
