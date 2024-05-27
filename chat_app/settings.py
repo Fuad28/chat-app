@@ -248,7 +248,7 @@ sentry_sdk.init(
 
 
 EMAIL_BACKEND = env.str("EMAIL_BACKEND", "anymail.backends.mailjet.EmailBackend")
-DEFAULT_FROM_EMAIL = env.str("DEFAULT_FROM_EMAIL") 
+DEFAULT_FROM_EMAIL = env.str("DEFAULT_FROM_EMAIL", "fuadadio75@gmail.com") 
 
 
 if EMAIL_BACKEND == "django.core.mail.backends.smtp.EmailBackend":
