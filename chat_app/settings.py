@@ -201,24 +201,6 @@ DJOSER = {
 }
 
 
-EMAIL_BACKEND = env.str("EMAIL_BACKEND", "anymail.backends.mailjet.EmailBackend")
-DEFAULT_FROM_EMAIL = env.str("DEFAULT_FROM_EMAIL") 
-
-
-if EMAIL_BACKEND == "django.core.mail.backends.smtp.EmailBackend":
-    EMAIL_HOST= env.str("EMAIL_HOST", "smtp4dev")
-    EMAIL_HOST_USER=env.str("EMAIL_HOST_USER", "")
-    EMAIL_HOST_PASSWORD= env.str("EMAIL_HOST_PASSWORD", "")
-    EMAIL_PORT= env.str("EMAIL_PORT", 25)
-
-elif EMAIL_BACKEND == "anymail.backends.mailjet.EmailBackend":
-    ANYMAIL = {
-        "MAILJET_API_KEY": env.str("MAILJET_API_KEY"),
-        "MAILJET_SECRET_KEY": env.str("MAILJET_SECRET_KEY"),
-        "MAILJET_API_URL": env.str("MAILJET_API_URL")
-    }
-
-
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
