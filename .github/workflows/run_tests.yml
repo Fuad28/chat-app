@@ -40,6 +40,9 @@ jobs:
             - name: Build the Docker containers
               run: docker-compose -f docker-compose.dev.yml up -d --build --remove-orphans
 
+            - name: List all running containers
+              run: docker ps -a
+
             - name: Wait for DB to be ready
               run: |
                   docker-compose -f docker-compose.dev.yml run web sh -c 'until nc -z db 5432; do echo "Waiting for db"; sleep 3; done'
