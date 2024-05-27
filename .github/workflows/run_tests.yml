@@ -47,7 +47,7 @@ jobs:
               run: docker-compose -f docker-compose.dev.yml up -d --build --remove-orphans
 
             - name: Make run_tests.sh executable
-              run: chmod +x /app/run_tests.sh
+              run: chmod +x ./app/run_tests.sh
 
             - name: Run tests
               run: docker-compose -f docker-compose.dev.yml exec web ./run_tests.sh
