@@ -20,13 +20,11 @@ services:
         ports:
             - "5432:5432"
         env_file:
-            - ./.env
+            - .env
         volumes:
             - pgdata:/var/lib/postgresql/data
         environment:
-            - POSTGRES_DB=${DB_NAME}
-            - POSTGRES_USER=${DB_USERNAME}
-            - POSTGRES_PASSWORD=${DB_PASS}
+            - POSTGRES_DB_URL=${DATABASE_URL}
 
     redis:
         image: redis:6.2-alpine
