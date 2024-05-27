@@ -16,7 +16,7 @@ from api.v1.permissions import (
 from api.v1.serializers.conversation import (
 	CreateConversationSerializer, ConversationSerializer, SimpleConversationSerializer,
 	AddORemoveMemberConversationSerializer, CreateUpdateMessageSerializer,
-	MessageSerializer, SimpleMessageSerializer
+	MessageSerializer, SimpleMessageSerializer, MarkMessageReadSerializer
 )
 
 class ConversationViewSet(ModelViewSet):
@@ -32,12 +32,18 @@ class ConversationViewSet(ModelViewSet):
 		if self.action == "retrieve":
 			return ConversationSerializer
 		
+		if self.action == "mark_message_read":
+			return MarkMessageReadSerializer
+		
 
 		return SimpleConversationSerializer
 	
 	def get_permissions(self):
 		if self.action in ["add_member", "remove_member", "make_admin"]:
 			return [IsAuthenticated(), IsConversationMember(), IsConversationAdmin()]
+		
+		if self.action == "mark_message_read":
+			return [IsAuthenticated(), IsConversationMember()]
 
 		return [IsAuthenticated()]
 
@@ -158,6 +164,20 @@ class ConversationViewSet(ModelViewSet):
 
 		return Response(status= status.HTTP_204_NO_CONTENT)
 	
+	@action(detail=True, methods=["post"])
+	def mark_message_read(self,  request: Request, **kwargs):
+		print(request.data)
+		conversation = self.get_object()
+		serializer = self.get_serializer(
+			data= request.data.get("data"), 
+			context= {"user": self.request.user},
+			many= True
+		)
+		serializer.is_valid(raise_exception= True)
+		serializer.save()
+
+		return Response(status= status.HTTP_204_NO_CONTENT)
+	
 
 class MessageViewSet(ModelViewSet):
 	pagination_class = CustomLimitOffsetPagination
@@ -168,6 +188,9 @@ class MessageViewSet(ModelViewSet):
 		
 		if self.action == "list":
 			return SimpleMessageSerializer
+		
+		if self.action == "mark_message_read":
+			return MarkMessageReadSerializer
 		
 		return MessageSerializer
 	
