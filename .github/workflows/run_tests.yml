@@ -31,6 +31,16 @@ jobs:
                   envkey_DJANGO_LOG_LEVEL: ${{ secrets.DJANGO_LOG_LEVEL }}
                   envkey_MERCHANT_ID: ${{ secrets.MERCHANT_ID }}
                   envkey_SENTRY_URL: ${{ secrets.SENTRY_URL }}
+                  envkey_EMAIL_BACKEND: ${{ secrets.EMAIL_BACKEND }}
+                  envkey_EMAIL_HOST: ${{ secrets.EMAIL_HOST }}
+                  envkey_EMAIL_HOST_PASSWORD: ${{ secrets.EMAIL_HOST_PASSWORD }}
+                  envkey_EMAIL_PORT: ${{ secrets.EMAIL_PORT }}
+                  envkey_MAILJET_API_KEY: ${{ secrets.MAILJET_API_KEY }}
+                  envkey_MAILJET_SECRET_KEY: ${{ secrets.MAILJET_SECRET_KEY }}
+                  envkey_MAILJET_API_URL: ${{ secrets.MAILJET_API_URL }}
+                  envkey_DEFAULT_FROM_EMAILL: ${{ secrets.DEFAULT_FROM_EMAIL }}
+                  envkey_EMAIL_HOST_USER: ${{ secrets.EMAIL_HOST_USER }}
+
                   file_name: .env
                   fail_on_empty: false
 
