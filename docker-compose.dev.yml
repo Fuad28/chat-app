@@ -18,13 +18,15 @@ services:
         image: postgres:14.1-alpine
         restart: always
         ports:
-            - "5434:5432"
+            - "5432:5432"
         env_file:
-            - .env
+            - ./.env
         volumes:
             - pgdata:/var/lib/postgresql/data
         environment:
-            - POSTGRES_DB_URL=${DATABASE_URL}
+            - POSTGRES_DB=${DB_NAME}
+            - POSTGRES_USER=${DB_USERNAME}
+            - POSTGRES_PASSWORD=${DB_PASS}
 
     redis:
         image: redis:6.2-alpine

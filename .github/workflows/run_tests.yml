@@ -1,39 +1,44 @@
 name: Run tests
 
 on:
-  push:
-    branches: [ "master" ]
-  pull_request:
-    branches: [ "master" ]
+    push:
+        branches: ["master"]
+    pull_request:
+        branches: ["master"]
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
+    build:
+        runs-on: ubuntu-latest
 
-      - name: Generate .env file
-        uses: SpicyPizza/create-envfile@v1.3
-        with:
-          envkey_DEBUG: ${{ secrets.DEBUG }}
-          envkey_ALLOWED_HOSTS: ${{ secrets.ALLOWED_HOSTS }}      
-          envkey_DJANGO_CSRF_TRUSTED_ORIGINS: ${{ secrets.DJANGO_CSRF_TRUSTED_ORIGINS }}
-          envkey_TIME_ZONE: ${{ secrets.TIME_ZONE }}
-          envkey_DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          envkey_CHANNEL_LAYERS_BACKEND: ${{ secrets.CHANNEL_LAYERS_BACKEND }}
-          envkey_SECRET_KEY: ${{ secrets.SECRET_KEY }}
-          envkey_REDIS_HOST: ${{ secrets.REDIS_HOST }}
-          envkey_REDIS_PORT: ${{ secrets.REDIS_PORT }}      
-          envkey_REDIS_CACHE_URL: ${{ secrets.REDIS_CACHE_URL }}
-          envkey_DDJANGO_LOG_LEVEL: ${{ secrets.DJANGO_LOG_LEVEL }}
-          envkey_MERCHANT_ID: ${{ secrets.MERCHANT_ID }}
-          envkey_SENTRY_URL: ${{ secrets.SENTRY_URL }}
+        steps:
+            - uses: actions/checkout@v2
 
-          file_name: .env
-          fail_on_empty: false
+            - name: Generate .env file
+              uses: SpicyPizza/create-envfile@v1.3
+              with:
+                  envkey_DEBUG: ${{ secrets.DEBUG }}
+                  envkey_ALLOWED_HOSTS: ${{ secrets.ALLOWED_HOSTS }}
+                  envkey_DJANGO_CSRF_TRUSTED_ORIGINS: ${{ secrets.DJANGO_CSRF_TRUSTED_ORIGINS }}
+                  envkey_TIME_ZONE: ${{ secrets.TIME_ZONE }}
+                  envkey_DATABASE_URL: ${{ secrets.DATABASE_URL }}
+                  envkey_DB_NAME: ${{ secrets.DB_NAME }}
+                  envkey_DB_PASS: ${{ secrets.DB_PASS }}
+                  envkey_DB_USERNAME: ${{ secrets.DB_USERNAME }}
+                  envkey_SECRET_KEY: ${{ secrets.SECRET_KEY }}
+                  envkey_REDIS_HOST: ${{ secrets.REDIS_HOST }}
+                  envkey_REDIS_PORT: ${{ secrets.REDIS_PORT }}
+                  envkey_REDIS_CACHE_URL: ${{ secrets.REDIS_CACHE_URL }}
+                  envkey_DJANGO_LOG_LEVEL: ${{ secrets.DJANGO_LOG_LEVEL }}
+                  envkey_MERCHANT_ID: ${{ secrets.MERCHANT_ID }}
+                  envkey_SENTRY_URL: ${{ secrets.SENTRY_URL }}
+                  file_name: .env
+                  fail_on_empty: false
 
-      - name: Build the Docker containers
-        run: docker-compose -f docker-compose.dev.yml up -d --build --remove-orphans
+            - name: Build the Docker containers
+              run: docker-compose -f docker-compose.dev.yml up -d --build --remove-orphans
 
-      - name: Run tests
-        run: docker-compose -f docker-compose.dev.yml run web /app/run_tests.sh     
+            - name: Make run_tests.sh executable
+              run: chmod +x run_tests.sh
+
+            - name: Run tests
+              run: docker-compose -f docker-compose.dev.yml run web ./run_tests.sh
