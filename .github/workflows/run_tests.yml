@@ -46,14 +46,11 @@ jobs:
             - name: Build the Docker containers
               run: docker-compose -f docker-compose.dev.yml up -d --build --remove-orphans
 
-            - name: Log current wd
-              run: echo pwd
-
-            - name: Log files in wd
-              run: echo ls
+            - name: Check files in the current working directory
+              run: ls -la
 
             - name: Make run_tests.sh executable
-              run: chmod +x ./app/run_tests.sh
+              run: chmod +x run_tests.sh
 
             - name: Run tests
-              run: docker-compose -f docker-compose.dev.yml exec web ./run_tests.sh
+              run: docker-compose -f docker-compose.dev.yml run web ./run_tests.sh
