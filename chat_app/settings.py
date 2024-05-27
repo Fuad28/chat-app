@@ -38,18 +38,17 @@ ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['*'])
 CSRF_TRUSTED_ORIGINS = env.list('DJANGO_CSRF_TRUSTED_ORIGINS', default=['*'])
 
 ASGI_APPLICATION= "chat_app.asgi.application"
-
-REDIS_HOST= env.str("REDIS_HOST")
-REDIS_PORT= env.int("REDIS_PORT")
         
 CHANNEL_LAYERS = {
     "default": {
         "BACKEND": env("CHANNEL_LAYERS_BACKEND", default="channels_redis.core.RedisChannelLayer"),
         "CONFIG": {
-            "hosts": [(REDIS_HOST, REDIS_PORT)],
+            "hosts": [(env.str("REDIS_HOST"), env.int("REDIS_PORT"))],
         },
     },
 }
+
+CACHES = {'default': env.cache("REDIS_CACHE_URL")}
 
 # Application definition
 
