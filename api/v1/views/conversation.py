@@ -7,7 +7,6 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.request import Request
 
-
 from api.models import Conversation,  ConversationMembers, Message
 from api.v1.utils import CustomLimitOffsetPagination
 from api.v1.permissions import (
@@ -181,6 +180,7 @@ class ConversationViewSet(ModelViewSet):
 
 class MessageViewSet(ModelViewSet):
 	pagination_class = CustomLimitOffsetPagination
+	throttle_scope = 'messages'
 	
 	def get_serializer_class(self):
 		if self.action in ["create", "partial_update", "update"]:
