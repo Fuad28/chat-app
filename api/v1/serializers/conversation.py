@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from api.models import User, Conversation, Message, ConversationMembers
+from api.models import User, Conversation, Message, ConversationMembers, MessageViewers
 from api.enums import MessageTypeEnum
 from api.v1.serializers import UserRetrieveSerializer
 
@@ -65,6 +65,15 @@ class ConversationSerializer(serializers.ModelSerializer):
 
 class AddORemoveMemberConversationSerializer(serializers.Serializer):
     user= serializers.PrimaryKeyRelatedField(queryset= User.objects.all())
+    
+
+class MarkMessageReadSerializer(serializers.Serializer):
+    message= serializers.PrimaryKeyRelatedField(queryset= Message.objects.all())
+    seen_at= serializers.DateTimeField()
+
+    def create(self, validated_data):
+        user= self.context.get("user")
+        return MessageViewers.objects.create(user= user, **validated_data)
     
 
 class MessageSerializer(serializers.ModelSerializer):
@@ -134,3 +143,4 @@ class CreateUpdateMessageSerializer(serializers.ModelSerializer):
         message.seen_by.add(user)
 
         return message
+
