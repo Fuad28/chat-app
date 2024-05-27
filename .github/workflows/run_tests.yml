@@ -34,35 +34,8 @@ jobs:
                   file_name: .env
                   fail_on_empty: false
 
-            - name: Set up Docker Compose
-              run: |
-                  sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-                  sudo chmod +x /usr/local/bin/docker-compose
-
-            - name: Log .env file
-              run: cat .env
-
-            - name: Files in cwd
-              run: ls -la
-
-            - name: Log .env file
-              run: cat .env
-
             - name: Build the Docker containers
               run: docker-compose -f docker-compose.dev.yml up -d --build --remove-orphans
-
-            - name: List all running containers
-              run: docker ps -a
-
-            - name: Print DB logs
-              run: docker-compose -f docker-compose.dev.yml logs db
-
-            - name: Wait for DB to be ready
-              run: |
-                  docker-compose -f docker-compose.dev.yml run web sh -c 'until nc -z db 5432; do echo "Waiting for db"; sleep 3; done'
-
-            - name: List all running containers
-              run: docker ps -a
 
             - name: Make run_tests.sh executable
               run: chmod +x run_tests.sh
