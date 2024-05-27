@@ -13,12 +13,6 @@ jobs:
         steps:
             - uses: actions/checkout@v2
 
-            - name: Set up Docker Buildx
-              uses: docker/setup-buildx-action@v1
-
-            - name: Set up QEMU
-              uses: docker/setup-qemu-action@v1
-
             - name: Generate .env file
               uses: SpicyPizza/create-envfile@v1.3
               with:
@@ -46,8 +40,12 @@ jobs:
             - name: Build the Docker containers
               run: docker-compose -f docker-compose.dev.yml up -d --build --remove-orphans
 
-            - name: Check files in the current working directory
-              run: ls -la
+            - name: Wait for DB to be ready
+              run: |
+                  docker-compose -f docker-compose.dev.yml run web sh -c 'until nc -z db 5432; do echo "Waiting for db"; sleep 3; done'
+
+            - name: List all running containers
+              run: docker ps -a
 
             - name: Make run_tests.sh executable
               run: chmod +x run_tests.sh
