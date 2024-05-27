@@ -1,5 +1,4 @@
 from django.db import models
-from django.core.cache import cache
 
 import uuid
 
@@ -37,18 +36,12 @@ class Conversation(models.Model):
 	def __str__(self):
 		return f"{self.id}-{self.name}"
 	
-	def add_member(self, user: User):
-		self.members.add(user)
-
-	def remove_member(self, user: User):
-		self.members.remove(user)
-	
 	def to_dict(self):
 		return {
 			"id": str(self.id),
 			"name": self.name,
 			"is_private": self.is_private,
-			"created_by": self.created_by.to_dict()
+			"created_by": self.created_by.get_full_name()
 		}
 		
 class ConversationMembers(models.Model):
@@ -96,16 +89,6 @@ class Message(models.Model):
 
 	def __str__(self):
 		return f"{self.id}"
-	
-	def to_dict(self):
-		return {
-			'id': str(self.id),
-			'text': self.text,
-			'media_url': self.media_url,
-			'sent_by': self.sent_by.to_dict(),
-			'sent_at': self.sent_at.isoformat(),
-			'message_type': self.message_type,
-		}
 	
 class MessageViewers(models.Model):
 	""" Holds users that have seen a message. """
