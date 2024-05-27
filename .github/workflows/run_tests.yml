@@ -21,6 +21,9 @@ jobs:
                   envkey_DJANGO_CSRF_TRUSTED_ORIGINS: ${{ secrets.DJANGO_CSRF_TRUSTED_ORIGINS }}
                   envkey_TIME_ZONE: ${{ secrets.TIME_ZONE }}
                   envkey_DATABASE_URL: ${{ secrets.DATABASE_URL }}
+                  envkey_DB_NAME: ${{ secrets.DB_NAME }}
+                  envkey_DB_PASS: ${{ secrets.DB_PASS }}
+                  envkey_DB_USERNAME: ${{ secrets.DB_USERNAME }}
                   envkey_SECRET_KEY: ${{ secrets.SECRET_KEY }}
                   envkey_REDIS_HOST: ${{ secrets.REDIS_HOST }}
                   envkey_REDIS_PORT: ${{ secrets.REDIS_PORT }}
