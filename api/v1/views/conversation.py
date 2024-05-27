@@ -165,8 +165,6 @@ class ConversationViewSet(ModelViewSet):
 	
 	@action(detail=True, methods=["post"])
 	def mark_message_read(self,  request: Request, **kwargs):
-		print(request.data)
-		conversation = self.get_object()
 		serializer = self.get_serializer(
 			data= request.data.get("data"), 
 			context= {"user": self.request.user},

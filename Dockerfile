@@ -20,6 +20,9 @@ RUN apt-get update \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Install netcat
+RUN apt-get update && apt-get install -y netcat-openbsd
+
 # Copy the rest of the application code
 COPY . .
 RUN touch .env
