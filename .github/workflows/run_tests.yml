@@ -43,6 +43,9 @@ jobs:
             - name: List all running containers
               run: docker ps -a
 
+            - name: Print DB logs
+              run: docker-compose -f docker-compose.dev.yml logs db
+
             - name: Wait for DB to be ready
               run: |
                   docker-compose -f docker-compose.dev.yml run web sh -c 'until nc -z db 5432; do echo "Waiting for db"; sleep 3; done'
