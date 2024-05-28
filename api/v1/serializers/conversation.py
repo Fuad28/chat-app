@@ -89,7 +89,7 @@ class MessageSerializer(serializers.ModelSerializer):
         ]
 
     def get_is_mine(self, instance: Message):
-        return self.context.get("user") == instance.seen_by
+        return self.context.get("user") == instance.sent_by
 
 
 class SimpleMessageSerializer(serializers.ModelSerializer):
@@ -103,7 +103,7 @@ class SimpleMessageSerializer(serializers.ModelSerializer):
         ]
 
     def get_is_mine(self, instance: Message):
-        return self.context.get("user") == instance.seen_by
+        return self.context.get("user") == instance.sent_by
     
 
 class CreateUpdateMessageSerializer(serializers.ModelSerializer):
