@@ -76,39 +76,37 @@ class MarkMessageReadSerializer(serializers.Serializer):
         return MessageViewers.objects.create(user= user, **validated_data)
     
 
-class MessageSerializer(serializers.ModelSerializer):
-    sent_by= UserRetrieveSerializer()
-    seen_by= UserRetrieveSerializer(many= True)
-    is_mine= serializers.SerializerMethodField()
-
-    class Meta:
-        model= Message
-        fields= [
-            "id", "conversation", "sent_by",  "is_mine", "sent_at",
-            "seen_by", "updated_at", "media_url", "text", "message_type"
-        ]
-
-    def get_is_mine(self, instance: Message):
-        return self.context.get("user") == instance.sent_by
-
-
 class SimpleMessageSerializer(serializers.ModelSerializer):
     sent_by= UserRetrieveSerializer()
     is_mine= serializers.SerializerMethodField()
     class Meta:
         model= Message
         fields= [
-            "id", "conversation", "sent_by", "is_mine", "sent_at",
-            "seen_by", "updated_at", "media_url", "text", "message_type"
+            "id","conversation", "message_type", "media_url", "text",
+            "is_mine", "sent_at", "updated_at", "deleted_at", "sent_by",  "seen_by",
         ]
 
     def get_is_mine(self, instance: Message):
         return self.context.get("user") == instance.sent_by
     
 
-class CreateUpdateMessageSerializer(serializers.ModelSerializer):
-    """Creates or updates a message record"""
+    def to_representation(self, instance: Message):
+        data= super().to_representation(instance)
 
+        if instance.deleted_at:
+            data["text"]= ""
+            data["media_url"]= ""
+        
+        return data
+    
+        
+class MessageSerializer(SimpleMessageSerializer):
+    seen_by= UserRetrieveSerializer(many= True)
+
+
+class CreateMessageSerializer(serializers.ModelSerializer):
+    """Creates a message record"""
+    
     class Meta:
         model= Message
         fields= ["id", "media_url",  "text", "message_type"]
@@ -121,20 +119,26 @@ class CreateUpdateMessageSerializer(serializers.ModelSerializer):
         if (message_type == MessageTypeEnum.TEXT) and (not text):
             raise serializers.ValidationError(
                 "Message of type text must contain a text.")
-        
+
         if (message_type != MessageTypeEnum.TEXT) and (not media_url):
             raise serializers.ValidationError(
                 "Message of types audio, video and image contain a media_url.")
+        
+        if text and media_url:
+            raise serializers.ValidationError(
+                "Messages can only be a single type.")
+
         
         return attrs
     
     def to_representation(self, instance):
         return SimpleMessageSerializer(instance= instance).data
-
+    
 
     def create(self, validated_data):
         user= self.context.get("user")
         conversation_id= self.context.get("conversation_id")
+
         message= Message.objects.create(
             sent_by= user, 
             conversation_id= conversation_id, 
@@ -144,3 +148,27 @@ class CreateUpdateMessageSerializer(serializers.ModelSerializer):
 
         return message
 
+
+class UpdateMessageSerializer(serializers.ModelSerializer):
+    """Updates a message record"""
+    class Meta:
+        model= Message
+        fields= ["id", "media_url",  "text"]
+    
+    def validate(self, attrs):
+        message_type = self.context.get("message_type")
+        media_url= attrs.get('media_url')
+        text= attrs.get('text')
+
+        if (message_type == MessageTypeEnum.TEXT) and media_url:
+            raise serializers.ValidationError(
+                "Message of type text must only contain text.")
+        
+        if (message_type != MessageTypeEnum.TEXT) and text:
+            raise serializers.ValidationError(
+                "Message of types audio, video and image only contain media_url.")
+        
+        return attrs
+    
+    def to_representation(self, instance):
+        return SimpleMessageSerializer(instance= instance).data
