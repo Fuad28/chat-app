@@ -8,6 +8,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action 
 from rest_framework.response import Response
 from rest_framework.request import Request
+from rest_framework.filters import SearchFilter
 
 from api.models import Conversation,  ConversationMembers, Message
 from api.v1.utils import CustomLimitOffsetPagination
@@ -24,6 +25,8 @@ from api.v1.serializers.conversation import (
 
 class ConversationViewSet(ModelViewSet):
 	http_method_names= ["get", "post", "patch"]
+	filter_backends= [SearchFilter]
+	search_fields= ["name"]
 	
 	def get_serializer_class(self):
 		if self.action in ["add_member", "remove_member", "make_admin"]:
