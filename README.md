@@ -4,6 +4,10 @@ This is documentation on the assessment from Tempo AI ventures.
 
 Live url: [https://chat-app-t5i4.onrender.com](https://chat-app-t5i4.onrender.com)
 
+#### Please note
+
+Since free resources from render are being used (i.e. webserver, redis, and Postgres), there's bound to be some delays most especially when there's been no activity for a while. Hence, the first requests might take some seconds.
+
 ## Running
 
 To set up this service for local or remote deployment on a computer environment, you need to follow the steps below.
@@ -87,6 +91,7 @@ PostgreSQL was selected due to its scalability, performance, and exciting featur
 -   The API is deployed on render.
 -   Mails are sent using Mailjet API in production. We however use a development smtp server called smtp4dev for development. The emails can be accessed via [http://127.0.0.1:8001/](http://127.0.0.1:8001/) in development.
 -   Soft delete is implemented for messages. Further discussions can be had on how to handle them.
+-   Searching is implemented on conversation list
 
 #### Recommendation for improvement
 
@@ -95,7 +100,3 @@ PostgreSQL was selected due to its scalability, performance, and exciting featur
 -   Upon user registration, we can implement an activate account feature for more security.
 -   We can give more responsibilities to conversation admins. For now, admins can add and remove people from the group (although a group creator can't be removed). Admins can also delete a conversation member message.
 -   We can also look into data encryption so that users can be assured of their privacy.
-
-#### Final note
-
-Since free resources from render are being used (i.e. webserver, redis, and Postgres), there's bound to be some delays most especially when there's been no activity for a while.
