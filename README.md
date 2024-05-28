@@ -86,6 +86,7 @@ PostgreSQL was selected due to its scalability, performance, and exciting featur
 -   Throttling is implemented project-wise and also specifically on messages. The throttle rate for users is 1000 messages per day and that of messages is set to 60 messages per minute. These values are abstract and subsequent observation and data analytics can help establish a sensible value.
 -   The API is deployed on render.
 -   Mails are sent using Mailjet API in production. We however use a development smtp server called smtp4dev for development. The emails can be accessed via [http://127.0.0.1:8001/](http://127.0.0.1:8001/) in development.
+-   Soft delete is implemented for messages. Further discussions can be had on how to handle them.
 
 #### Recommendation for improvement
 
@@ -93,6 +94,7 @@ PostgreSQL was selected due to its scalability, performance, and exciting featur
 -   We can extend the documentation to be more idiomatic.
 -   Upon user registration, we can implement an activate account feature for more security.
 -   We can give more responsibilities to conversation admins. For now, admins can add and remove people from the group (although a group creator can't be removed). Admins can also delete a conversation member message.
+-   We can also look into data encryption so that users can be assured of their privacy.
 
 #### Final note
 
