@@ -122,7 +122,7 @@ class TestConversationConsumer:
 
 		event = await communicator.receive_json_from(timeout= 3)
 		assert event.get("message") is not None
-		assert event["message"].get("status") == "connected"
+		assert event["message"].get("status") == "status.connected"
 
 		await communicator.disconnect()
 
