@@ -1,5 +1,4 @@
 from django.db import models
-from django.utils import timezone
 
 import uuid
 
@@ -43,11 +42,7 @@ class Conversation(models.Model):
 
 	def __str__(self):
 		return f"{self.id}-{self.name}"
-	
-	def save(self, *args, **kwargs):
-		if self.pk:  
-			self.updated_at = timezone.now()
-		super().save(*args, **kwargs)
+
 		
 class ConversationMembers(models.Model):
 	""" Holds members of a conversation record. """
@@ -88,16 +83,12 @@ class Message(models.Model):
 	media_url= models.URLField(**null_blank)
 	text= models.TextField(**null_blank)
 	message_type= models.CharField(max_length= 50, choices= MessageTypeEnum.choices)
+	deleted_at= models.DateTimeField(**null_blank)
 
 	objects= CachedMessageQuerySet.as_manager()
 
 	def __str__(self):
 		return f"{self.id}"
-	
-	def save(self, *args, **kwargs):
-		if self.pk:  
-			self.updated_at = timezone.now()
-		super().save(*args, **kwargs)
 	
 class MessageViewers(models.Model):
 	""" Holds users that have seen a message. """

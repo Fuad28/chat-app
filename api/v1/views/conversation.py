@@ -1,22 +1,25 @@
 from django.db.models import Q
+from django.utils import timezone
 
 from rest_framework import status
 from rest_framework.viewsets import ModelViewSet
+from rest_framework.serializers import ModelSerializer
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action 
 from rest_framework.response import Response
 from rest_framework.request import Request
 
-from api.models import User, Conversation,  ConversationMembers, Message
+from api.models import Conversation,  ConversationMembers, Message
 from api.v1.utils import CustomLimitOffsetPagination
 from api.v1.signals import new_conversation_event
 from api.v1.permissions import (
 	IsConversationMember, IsConversationAdmin, IsMessageOwnerorAdmin)
 
 from api.v1.serializers.conversation import (
-	CreateConversationSerializer, ConversationSerializer, SimpleConversationSerializer,
-	AddORemoveMemberConversationSerializer, CreateUpdateMessageSerializer,
-	MessageSerializer, SimpleMessageSerializer, MarkMessageReadSerializer
+	CreateConversationSerializer, ConversationSerializer,
+	SimpleConversationSerializer, AddORemoveMemberConversationSerializer,
+	CreateMessageSerializer, UpdateMessageSerializer, MessageSerializer,
+	SimpleMessageSerializer, MarkMessageReadSerializer
 )
 
 class ConversationViewSet(ModelViewSet):
@@ -58,6 +61,11 @@ class ConversationViewSet(ModelViewSet):
 	
 	def get_object(self) -> Conversation:
 		return super().get_object()
+
+	def perform_update(self, serializer: ModelSerializer):
+		serializer.validated_data["updated_at"]= timezone.now()
+
+		return super().perform_update(serializer)
 	
 
 	@action(detail=True, methods=["post"])
@@ -235,8 +243,11 @@ class MessageViewSet(ModelViewSet):
 	throttle_scope = 'messages'
 	
 	def get_serializer_class(self):
-		if self.action in ["create", "partial_update", "update"]:
-			return CreateUpdateMessageSerializer
+		if self.action == "create":
+			return CreateMessageSerializer
+		
+		if self.action in ["partial_update", "update"]:
+			return UpdateMessageSerializer
 		
 		if self.action == "list":
 			return SimpleMessageSerializer
@@ -265,8 +276,46 @@ class MessageViewSet(ModelViewSet):
 		)
 	
 	def get_serializer_context(self):
-		return {
+		context=  {
 			"user": self.request.user,
-			"conversation_id": self.kwargs.get("conversation_pk")
+			"conversation_id": self.kwargs.get("conversation_pk"),
+			
 			}
+		
+		if self.action not in ["create", "list"]:
+			context["message_type"]= self.get_object().message_type
+
+		return context
 	
+	def get_object(self) -> Message:
+		return super().get_object()
+	
+	def perform_update(self, serializer: ModelSerializer):		
+		serializer.validated_data["updated_at"]= timezone.now()
+
+		return super().perform_update(serializer)
+	
+	def update(self, request, *args, **kwargs):
+		message= self.get_object()
+
+		if message.deleted_at:
+			return Response(
+				data= {"detail": "Update not allowed on deleted message."},
+				status= status.HTTP_400_BAD_REQUEST
+			)
+		
+		return super().update(request, *args, **kwargs)
+	
+	def destroy(self, request, *args, **kwargs):
+		message= self.get_object()
+
+		if message.deleted_at:
+			return Response(
+				data= {"detail": "Delete not allowed on deleted message."},
+				status= status.HTTP_400_BAD_REQUEST
+			)
+		return super().destroy(request, *args, **kwargs)
+	
+	def perform_destroy(self, instance: Message):
+		instance.deleted_at= timezone.now()
+		instance.save()	
