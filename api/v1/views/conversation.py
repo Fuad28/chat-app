@@ -7,8 +7,9 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.request import Request
 
-from api.models import Conversation,  ConversationMembers, Message
+from api.models import User, Conversation,  ConversationMembers, Message
 from api.v1.utils import CustomLimitOffsetPagination
+from api.v1.signals import new_conversation_event
 from api.v1.permissions import (
 	IsConversationMember, IsConversationAdmin, IsMessageOwnerorAdmin)
 
@@ -63,64 +64,93 @@ class ConversationViewSet(ModelViewSet):
 	def join(self, request: Request, **kwargs):
 		conversation = self.get_object()
 
-		if not conversation.members.filter(id= request.user).exists():
-			return Response({
-				"detail": "You are already in conversation."
-				},
-			status= status.HTTP_400_BAD_REQUEST)
+		if conversation.members.filter(id= request.user.id).exists():
+			return Response(
+				data= {"detail": "You are already in the conversation."},
+				status= status.HTTP_400_BAD_REQUEST
+			)
 		
-		if not conversation.is_private:
-			conversation.members.add(request.user)
-			return Response(status= status.HTTP_204_NO_CONTENT)
+		if conversation.is_private:
+			return Response(
+				data= {"detail": "You can't join a private conversation."},
+				status= status.HTTP_403_FORBIDDEN
+			)
 		
-		return Response({
-			"detail": "You can't join a private conversation."
-			},
-			status= status.HTTP_403_FORBIDDEN)
+		
+		conversation.members.add(request.user)
+
+		new_conversation_event.send_robust(
+			sender= None, 
+			conversation_id= conversation.id,
+			event= {
+				"type": "user.join", 
+				"message": f"{request.user.first_name} joined the conversation."
+			})
+		
+		return Response(status= status.HTTP_204_NO_CONTENT)
 
 	@action(detail=True, methods=["post"])
 	def add_member(self, request: Request, **kwargs):
 		conversation = self.get_object()
 		serializer = self.get_serializer(data= request.data)
 		serializer.is_valid(raise_exception= True)
-		user= serializer.data.get("user")
+		user= serializer.validated_data.get("user")
+		user_in_conv_qs= conversation.members.filter(id= user.id)
 
-		if conversation.members.filter(id= user).exists():
-			return Response({
-				"detail": "User is already in conversation."
-				},
-			status= status.HTTP_400_BAD_REQUEST)
+		if user_in_conv_qs.exists():
+			return Response(
+				data= {"detail": "User is already in conversation."},
+				status= status.HTTP_400_BAD_REQUEST
+			)
 
-		if not conversation.is_private:
-			conversation.members.add(user)
-			return Response(status= status.HTTP_204_NO_CONTENT)
-		
-		return Response({
-				"detail": "You can't join a private conversation."},
-				status= status.HTTP_403_FORBIDDEN)
+		admin_first_name= request.user.first_name
+		user_first_name= user.first_name
+
+		new_conversation_event.send_robust(
+			sender= None, 
+			conversation_id= conversation.id,
+			event= {
+				"type": "user.added", 
+				"message": f"{admin_first_name} added {user_first_name} to the conversation."
+			})
+			
+		conversation.members.add(user)
+
+		return Response(status= status.HTTP_204_NO_CONTENT)
 	
 	@action(detail=True, methods=["post"])
 	def remove_member(self, request: Request, **kwargs):
 		conversation = self.get_object()
 		serializer = self.get_serializer(data= request.data)
 		serializer.is_valid(raise_exception= True)
-		user= serializer.data.get("user")
+		user= serializer.validated_data.get("user")
+		user_in_conv_qs= conversation.members.filter(id= user.id)
 
 		if (user == conversation.created_by.id) and (request.user != conversation.created_by):
-			return Response({
-				"detail": "You can't remove group creator."
-				},
-			status= status.HTTP_403_FORBIDDEN)
+			return Response(
+				data= {"detail": "You can't remove group creator."},
+				status= status.HTTP_403_FORBIDDEN
+			)
 		
 
-		if not conversation.members.filter(id= user).exists():
-			return Response({
-				"detail": "User is not in conversation."
-				},
-			status= status.HTTP_400_BAD_REQUEST)
+		if not user_in_conv_qs.exists():
+			return Response(
+				data= {"detail": "User is not in conversation."},
+				status= status.HTTP_400_BAD_REQUEST
+			)
 
-		
 		conversation.members.remove(user)
+
+		admin_first_name= request.user.first_name
+		user_first_name= user.first_name
+
+		new_conversation_event.send_robust(
+			sender= None, 
+			conversation_id= conversation.id,
+			event= {
+				"type": "user.removed", 
+				"message": f"{admin_first_name} removed {user_first_name} to the conversation."
+			})
 
 		return Response(status= status.HTTP_204_NO_CONTENT)
 	
@@ -129,13 +159,20 @@ class ConversationViewSet(ModelViewSet):
 		conversation = self.get_object()
 
 		if not conversation.members.filter(id= request.user.id).exists():
-			return Response({
-				"detail": "User is not in conversation."
-				},
-			status= status.HTTP_400_BAD_REQUEST)
-
+			return Response(
+				data= {"detail": "User is not in conversation."},
+				status= status.HTTP_400_BAD_REQUEST
+			)
 		
 		conversation.members.remove(request.user)
+
+		new_conversation_event.send_robust(
+			sender= None, 
+			conversation_id= conversation.id,
+			event= {
+				"type": "user.left", 
+				"message": f"{request.user.first_name} left the conversation."
+			})
 
 		return Response(status= status.HTTP_204_NO_CONTENT)
 	
@@ -144,22 +181,39 @@ class ConversationViewSet(ModelViewSet):
 		conversation = self.get_object()
 		serializer = self.get_serializer(data= request.data)
 		serializer.is_valid(raise_exception= True)
-		user= serializer.data.get("user")
-		
+		user= serializer.validated_data["user"]
+		user_in_conv_qs= conversation.members.filter(id= user.id)
 
-		if not conversation.members.filter(id= user).exists():
-			return Response({
-				"detail": "User is not in conversation."
-				},
-			status= status.HTTP_400_BAD_REQUEST)
-
+		if not user_in_conv_qs.exists():
+			return Response(
+				data= {"detail": "User is not in conversation."},
+				status= status.HTTP_400_BAD_REQUEST
+			)
 		
 		member= ConversationMembers.objects.get(
 			user= user, 
 			conversation= conversation
 		)
+
+		if member.is_admin:
+			return Response(
+				data= {"detail": "User is already an admin."},
+				status= status.HTTP_400_BAD_REQUEST
+			)
+
 		member.is_admin= True
 		member.save()
+
+		admin_first_name= request.user.first_name
+		user_first_name= user.first_name
+
+		new_conversation_event.send_robust(
+			sender= None, 
+			conversation_id= conversation.id,
+			event= {
+				"type": "new.admin", 
+				"message": f"{admin_first_name} made {user_first_name} admin."
+			})
 
 		return Response(status= status.HTTP_204_NO_CONTENT)
 	
