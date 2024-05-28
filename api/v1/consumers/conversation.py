@@ -17,8 +17,8 @@ class ConversationConsumer(AsyncWebsocketConsumer):
             await self.channel_layer.group_add(conversation_id, self.channel_name)
 
         data= {
-            "status": "connected",
-            "conversations": conversations
+            "type": "user.connected",
+            "message": conversations
         }
 
         return await self.channel_layer.send(self.channel_name, {"type": "send.message", "message": data})
